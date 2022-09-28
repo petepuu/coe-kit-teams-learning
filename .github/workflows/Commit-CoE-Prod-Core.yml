@@ -13,19 +13,19 @@ on:
 
 jobs:
   export-from-dev:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     # or you can say runs-on: ubuntu-latest
     env:
       RUNNER_DEBUG: 1
 
     steps:
       - name: Repo
-        run: echo ${{ github.workspace }}
+        run: echo ${GITHUB_WORKSPACE}
     
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
-          solution-file: /CoEKit-Production/CenterofExcellenceCoreComponents_3.41.zip
-          solution-folder: /CoEKit-Production/Aug22
+          solution-file: ${GITHUB_WORKSPACE}/CoEKit-Production/CenterofExcellenceCoreComponents_3.41.zip
+          solution-folder: ${GITHUB_WORKSPACE}/CoEKit-Production/Aug22
           solution-type: 'Unmanaged'
           overwrite-files: true
