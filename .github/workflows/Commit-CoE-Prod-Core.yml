@@ -1,7 +1,25 @@
-name: powerplatform-actions
-uses: microsoft/powerplatform-actions@v0.9.1
-  with:
-    name: unpack-solution action
+name: commit-coekit-prod-core
+# Export solution from DEV environment
+#  unpack it and prepare, commit and push a git branch with the changes
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Change this value
+      solution_name:
+        description: 'name of the solution to worked on from Power Platform'
+        required: false
+        default: ALMLab
+
+jobs:
+  export-from-dev:
+    runs-on: windows-latest
+    # or you can say runs-on: ubuntu-latest
+    env:
+      RUNNER_DEBUG: 1
+
+    steps:
+      - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
           solution-file: ${{ github.workspace }}/repo/CoEKit-Production/CoEStarterKit_Unmanaged.zip
