@@ -19,6 +19,9 @@ jobs:
       RUNNER_DEBUG: 1
 
     steps:
+      - name: Repo
+        run: echo ${{ github.workspace }}
+    
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
