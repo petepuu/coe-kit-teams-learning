@@ -7,9 +7,13 @@ on:
     inputs:
       # Change this value
       solution_name:
-        description: 'name of the solution to worked on from Power Platform'
-        required: false
-        default: ALMLab
+        description: 'CoEKit Production solution package name'
+        required: true
+        default: Dummy
+      solution_version:
+        description: 'CoEKit Production solution package version'
+        required: true
+        default: August2022
 
 jobs:
   export-from-dev:
@@ -21,14 +25,19 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-          
-      - name: Repo
-        run: cat readme.md
-    
+              
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
-          solution-file: CoEKit-Production/CenterofExcellenceCoreComponents_3.41.zip
-          solution-folder: CoEKit-Production/Aug22
+          solution-file: CoEKit-Production/${{ github.event.inputs.solution_name }}
+          solution-folder: CoEKit-Production/temp/${{ github.event.inputs.solution_version }}
           solution-type: 'Unmanaged'
           overwrite-files: true
+          
+      - name: branch-solution, prepare it for a PullRequest
+        uses: microsoft/powerplatform-actions/branch-solution@v0.9.1
+        with:
+          solution-folder: CoEKit-Production/temp/${{ github.event.inputs.solution_version }}
+          solution-target-folder: CoEKit-Production/${{ github.event.inputs.solution_version }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-empty-commit: true
