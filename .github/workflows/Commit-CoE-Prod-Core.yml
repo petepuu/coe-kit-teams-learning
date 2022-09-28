@@ -19,13 +19,17 @@ jobs:
       RUNNER_DEBUG: 1
 
     steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+          
       - name: Repo
-        run: echo ${GITHUB_WORKSPACE}
+        run: echo ${{ github.workspace }}
     
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
-          solution-file: ${GITHUB_WORKSPACE}/CoEKit-Production/CenterofExcellenceCoreComponents_3.41.zip
-          solution-folder: ${GITHUB_WORKSPACE}/CoEKit-Production/Aug22
+          solution-file: ${{ github.workspace }}/repo/CoEKit-Production/CenterofExcellenceCoreComponents_3.41.zip
+          solution-folder: ${{ github.workspace }}/repo/CoEKit-Production/Aug22
           solution-type: 'Unmanaged'
           overwrite-files: true
