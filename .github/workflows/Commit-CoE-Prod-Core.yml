@@ -16,7 +16,7 @@ on:
         default: August2022
 
 jobs:
-  export-from-dev:
+  commit-coekit-prod-core:
     runs-on: windows-latest
     # or you can say runs-on: ubuntu-latest
     env:
