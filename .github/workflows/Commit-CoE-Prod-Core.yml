@@ -33,7 +33,12 @@ jobs:
           solution-folder: coekit-prod-core/temp/${{ github.event.inputs.solution_version }}
           solution-type: 'Unmanaged'
           overwrite-files: true
-          
+      
+      - name: Format JSON
+        run: |
+          gci -Path coekit-prod-core/temp/${{ github.event.inputs.solution_version }} -Filter *.json -Recurse | % { gc -Path $_.FullName -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 100 | Set-Content -Path $_.FullName }
+        shell: pwsh
+        
       - name: branch-solution, prepare it for a PullRequest
         uses: microsoft/powerplatform-actions/branch-solution@v0.9.1
         with:
