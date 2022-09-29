@@ -9,7 +9,7 @@ on:
       solution_name:
         description: 'CoEKit Production solution package name'
         required: true
-        default: Dummy
+        default: CenterofExcellenceCoreComponents_?.??.zip
       solution_version:
         description: 'CoEKit Production solution package version'
         required: true
