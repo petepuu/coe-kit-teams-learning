@@ -1,0 +1,322 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "admin_sharedcommondataserviceforapps_98924"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_powerplatformforadmins_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "admin_CoECorePowerPlatformforAdmins"
+        },
+        "api": {
+          "name": "shared_powerplatformforadmins"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "staticResults": {
+        "List_DLP_Policies_V20": {
+          "status": "Succeeded",
+          "outputs": {
+            "statusCode": "OK",
+            "headers": {}
+          }
+        }
+      },
+      "triggers": {
+        "Run_Daily": {
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "schedule": {
+              "hours": [
+                "0"
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "12188783-96c7-4613-bb26-baf1c56b3e7d"
+          },
+          "type": "Recurrence"
+        }
+      },
+      "actions": {
+        "List_rows": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "87b37eb2-968e-43cc-9a6a-0a527f6030a1"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps_1",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "admin_dlppolicies",
+              "$filter": "admin_isshared eq true",
+              "$expand": "admin_blocked_policy_connectors($select=admin_id,admin_connectorid,admin_displayname)"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "List_DLP_Policies_V2": {
+          "runAfter": {
+            "List_rows_-_PowerApps_Connectors": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "757bc5d6-dd6e-4fd0-afbd-14413acb48f3"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_powerplatformforadmins_1",
+              "operationId": "ListPoliciesV2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerplatformforadmins"
+            },
+            "parameters": {},
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "staticResult": {
+              "staticResultOptions": "Disabled",
+              "name": "List_DLP_Policies_V20"
+            }
+          }
+        },
+        "Apply_to_each_shared_Policy": {
+          "foreach": "@body('Parse_JSON_-_DLP_Policies_with_Connectors')",
+          "actions": {
+            "Condition_-_Policy_still_exists_in_Power_Platform": {
+              "actions": {
+                "Run_a_Child_Flow": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "c104d02b-b2cd-4fb9-833b-bb5adff11c49"
+                  },
+                  "type": "Workflow",
+                  "inputs": {
+                    "host": {
+                      "workflowReferenceName": "e55e412f-bf69-ec11-8943-002248266489"
+                    },
+                    "body": {
+                      "text": "@item()?['admin_dlppolicyid']"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Filter_array": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Update_a_row_-_Policy_deleted_in_Power_Platform": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "0a04932c-a177-434c-aaa4-38ed243996b0"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps_1",
+                        "operationId": "UpdateRecord",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "admin_dlppolicies",
+                        "recordId": "@items('Apply_to_each_shared_Policy')?['admin_dlppolicyid']",
+                        "item/statecode": 1
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "greater": [
+                  "@length(body('Filter_array'))",
+                  0
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1ade9fba-e553-4fe5-abef-d463acd33e8f"
+              },
+              "type": "If"
+            },
+            "Policy_ID": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "57a9b3ae-d0a3-490c-b765-c5ceb9b326be"
+              },
+              "type": "Compose",
+              "inputs": "@string(items('Apply_to_each_shared_Policy')?['admin_policyid'])"
+            },
+            "Filter_array": {
+              "runAfter": {
+                "Policy_ID": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "52f63b2a-0201-40a1-96ac-48bf9fd91bb8"
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@outputs('List_DLP_Policies_V2')?['body/value']",
+                "where": "@equals(item()?['name'], outputs('Policy_ID'))"
+              }
+            }
+          },
+          "runAfter": {
+            "List_DLP_Policies_V2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b9905b3e-093c-413c-90c1-a7c143efd21e"
+          },
+          "type": "Foreach",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 50
+            }
+          }
+        },
+        "List_rows_-_PowerApps_Connectors": {
+          "runAfter": {
+            "Parse_JSON_-_DLP_Policies_with_Connectors": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4a2158ee-2d80-467f-9675-eb24995955bd"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps_1",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "admin_connectors",
+              "$select": "admin_id,admin_connectorid,admin_displayname"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Parse_JSON_-_DLP_Policies_with_Connectors": {
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "8a00ba14-1398-46da-9aba-9238b8e27b83"
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@outputs('List_rows')?['body/value']",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "@@odata.id": {
+                    "type": "string",
+                    "title": "Policy OData Id"
+                  },
+                  "admin_name": {
+                    "type": "string",
+                    "title": "Policy display name"
+                  },
+                  "statuscode@OData.Community.Display.V1.FormattedValue": {
+                    "type": "string",
+                    "title": "Formatted Policy status code"
+                  },
+                  "statuscode": {
+                    "type": "integer",
+                    "title": "Policy status code"
+                  },
+                  "admin_dlppolicyid": {
+                    "type": "string",
+                    "title": "Power Platform Policy Id",
+                    "description": "Unique identifier for the Policy as it appears in the Power Platform."
+                  },
+                  "statecode@OData.Community.Display.V1.FormattedValue": {
+                    "type": "string"
+                  },
+                  "statecode": {
+                    "type": "integer"
+                  },
+                  "admin_policyid": {
+                    "type": "string"
+                  },
+                  "admin_blocked_policy_connectors": {
+                    "type": "array",
+                    "title": "Blocked Connectors",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "@@odata.type": {
+                          "type": "string",
+                          "title": "Blocked connector OData type"
+                        },
+                        "@@odata.id": {
+                          "type": "string",
+                          "title": "Blocked connector OData Id"
+                        },
+                        "admin_id": {
+                          "type": "string",
+                          "title": "Blocked connector Id",
+                          "description": "Power Platform connector Id"
+                        },
+                        "admin_connectorid": {
+                          "type": "string",
+                          "title": "Blocked PowerAppsConnector Id"
+                        },
+                        "admin_displayname": {
+                          "type": "string",
+                          "title": "Blocked connector display name"
+                        }
+                      }
+                    }
+                  },
+                  "admin_blocked_policy_connectors@odata.nextLink": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "outputs": {}
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}
