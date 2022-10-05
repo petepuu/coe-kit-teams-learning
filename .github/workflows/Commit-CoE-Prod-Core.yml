@@ -29,20 +29,20 @@ jobs:
       - name: unpack-solution action
         uses: microsoft/powerplatform-actions/unpack-solution@v0.9.1
         with:
-          solution-file: coe-prod/${{ github.event.inputs.solution_name }}
-          solution-folder: coe-prod/temp/CenterOfExcellenceCoreComponents
+          solution-file: coe-prod-core/${{ github.event.inputs.solution_name }}
+          solution-folder: coe-prod-core/temp/CenterOfExcellenceCoreComponents
           solution-type: 'Unmanaged'
           overwrite-files: true
       
       - name: Format JSON
         run: |
-          gci -Path coe-prod/temp/CenterOfExcellenceCoreComponents -Filter *.json -Recurse | % { gc -Path $_.FullName -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 100 | Set-Content -Path $_.FullName }
+          gci -Path coe-prod-core/temp/CenterOfExcellenceCoreComponents -Filter *.json -Recurse | % { gc -Path $_.FullName -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 100 | Set-Content -Path $_.FullName }
         shell: pwsh
         
       - name: branch-solution, prepare it for a PullRequest
         uses: microsoft/powerplatform-actions/branch-solution@v0.9.1
         with:
-          solution-folder: coe-prod/temp/CenterOfExcellenceCoreComponents
-          solution-target-folder: coe-prod/CenterOfExcellenceCoreComponents
+          solution-folder: coe-prod-core/temp/CenterOfExcellenceCoreComponents
+          solution-target-folder: coe-prod-core/CenterOfExcellenceCoreComponents
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           allow-empty-commit: true
